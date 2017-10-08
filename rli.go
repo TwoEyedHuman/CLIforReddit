@@ -3,22 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-//	"os"
 	"net/http"
-//	"net/url"
-//	"io/ioutil"
-//	"strings"
+	"strings"
 	"bytes"
 	"time"
 )
-
-//var myClient = &http.Client(Timeout: 10 * time.Second}
-/*
-type Posting struct {
-	Title string
-	Subreddit string
-	
-}*/
 
 type RedditResponse struct {
 	Kind string
@@ -45,8 +34,6 @@ type ChildDataType struct {
 }
 
 func main() {
-//	resp, err := http.Get("https://www.reddit.com/top/.json?count=20")
-
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
 	}
@@ -62,32 +49,14 @@ func main() {
 		panic(err)
 	}
 
-//	respBytes := []byte(string(resp.Body))
-
-//	list1 := Listing{}
-
-//	err1 := json.Unmarshal(respBytes, &list1)
-
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-//	newStr := buf.String()
-
-//	fmt.Println(newStr)
-
 	var lst RedditResponse
 	json.Unmarshal([]byte(buf.String()), &lst)
 
-	fmt.Println(lst.Kind)
-	fmt.Println(lst.Data.Whitelist_status)
-	fmt.Println(lst.Data.Children[0].Kind)
-	fmt.Println(lst.Data.Children[0].Data.Title)
-	for i := range lst.Data.Children {
-		fmt.Printf("%d: %s \n", i, lst.Data.Children[i].Data.Title)
+	for i, v := range lst.Data.Children {
+		fmt.Printf("%d: %s \n", i, v.Data.Title)
 	}
-
-//	defer resp.Body.Close()
-//	body, err := ioutil.ReadAll(resp.Body)
-//	fmt.Println("get:\n", string(body))
 }
 
 var licenseCookie = &http.Cookie{Name: "oraclelicense",
@@ -99,20 +68,3 @@ func redirectPolicyFunc(req *http.Request, via []*http.Request) error {
 	req.AddCookie(licenseCookie)
 	return nil
 }
-
-/*
-func getJson(url string, target interace{}) error {
-	r, err := myClient.Get(url)
-	if err != nil {
-		return err
-	}
-
-	defer r.Body.Close()
-
-	return json.NewDecoder(r.Body).Decode(target)
-}
-*/
-//func getListing() Listing {
-//	res, err := 
-//	
-//}
