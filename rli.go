@@ -9,14 +9,12 @@ import (
 	"time"
 	"os"
 	"bufio"
+	"strconv"
 )
 
 const redditURL string = "https://www.reddit.com/"
-
-const (
-	NULL int = 0
-	EXIT = 1 + iota
-)
+const resultLimit int = 10
+const charLimit int = 64
 
 type RedditResponse struct {
 	Kind string
@@ -26,7 +24,7 @@ type RedditResponse struct {
 type DataType struct {
 	Modhash string
 	Whitelist_status string
-	Children []Child
+	Children []RedditResponse
 	After string
 	Before string
 	Subreddit_id string
@@ -74,46 +72,44 @@ type DataType struct {
 	Title string
 }
 
-type Child struct {
-	Kind string
-	Data DataType
-}
-
 func main() {
+	welcome()
 	originMenu()
 }
 
 func originMenu() {
-	fmt.Println("Welcome to CLI for Reddit!")
-	fmt.Println("----------Commands----------")
-	fmt.Println("goTo [subReddit]	: load the posts in subReddit")
-	fmt.Println("exit				: exit the program")
-	fmt.Println("back				: go back to the previous level")
-	
-	isExit := 0
+	isExit := 0  //condition that holds whether program should quit
 
-	reader := bufio.NewReader(os.Stdin)
-	for isExit != 1 {
+	reader := bufio.NewReader(os.Stdin) //reads input fromm command line
+
+	for isExit != 1 {  //value of 1 indicates quit
 		fmt.Printf("<Origin> Command: ")
 		usrIn, _ := reader.ReadString('\n')
-		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
-		if (strings.ToLower(cmd[0]) == "exit") {
-			//Signify exit
+		cmd := strings.Fields(strings.TrimRight(usrIn, "\n")) //trims and tokenizes user input
+		if (strings.ToLower(cmd[0]) == "exit") { //signify exit
 			isExit = 1
-		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
-			//Go to subreddit
+		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) { //go to subreddit
 			isExit = subreddit(cmd[1])
-		} else if (cmd[0] == "testing") {
+		} else if (cmd[0] == "testing") { //go to testing module
 			testing()
-		} else {
-			//Erroneous input
+		} else if (cmd[0] == "help") { //display commands
+			welcome()
+		} else {  //erroneous or unexpected input
 			fmt.Printf("Invalid input.\n")
 		}
 	}
 }
 
+func welcome() {
+	fmt.Println("Welcome to CLI for Reddit!")
+	fmt.Println("----------Commands----------")
+	fmt.Println("goTo [subReddit]		: load the posts in subReddit")
+	fmt.Println("exit				: exit the program")
+	fmt.Println("back				: go back to the previous level")
+}
+
 func subreddit(subredditString string) int {
-	loadURL := redditURL + "r/" + subredditString + "/.json?limit=10"
+	loadURL := fmt.Sprintf("%s%s%s%s%d", redditURL, "r/", subredditString, "/.json?limit=", resultLimit)
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -134,7 +130,7 @@ func subreddit(subredditString string) int {
 	json.Unmarshal([]byte(buf.String()), &lst)
 
 	for i, v := range lst.Data.Children {
-		fmt.Printf("%d: %s \n", i+1, v.Data.Title)
+		fmt.Printf("%d: %s \n", i+1, v.Data.Title[0:min(charLimit,len(v.Data.Title)-1)])
 	}	
 
 	reader := bufio.NewReader(os.Stdin)
@@ -154,6 +150,10 @@ func subreddit(subredditString string) int {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
 			return isExit
+		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
+			postIndex, _ := strconv.Atoi(cmd[1])
+			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id)
+			return isExit
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
@@ -167,7 +167,7 @@ func testing () {
 }
 
 func comments (subredditString string, postID string) int {
-	loadURL := redditURL + "r/" + subredditString + "/comments/" + postID + "/.json?"
+	loadURL := fmt.Sprintf("%s%s%s%s%s%s%d", redditURL, "r/", subredditString, "/comments/", postID, "/.json?limit=", resultLimit)
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -186,11 +186,21 @@ func comments (subredditString string, postID string) int {
 	buf.ReadFrom(resp.Body)
 	result := make([]RedditResponse,0)
 	json.Unmarshal([]byte(buf.String()), &result)
-
+	fmt.Printf("Size: %d\n", len(result[1].Data.Children))
 	for i, v := range result[1].Data.Children {
-		fmt.Printf("%d: %s\n",i+1, v.Data.Body)
+		if (len(v.Data.Body) > 0) {
+			fmt.Printf("%d: %s\n",i+1, v.Data.Body[0:min(charLimit, len(v.Data.Body)-1)])
+		}
 	}
 	return 0
+}
+
+func min(a int, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
 }
 
 var licenseCookie = &http.Cookie{Name: "oraclelicense",
