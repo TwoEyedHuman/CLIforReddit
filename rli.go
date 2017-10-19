@@ -13,6 +13,15 @@ import (
 
 const redditURL string = "https://www.reddit.com/"
 
+const (
+	NULL int = 0
+	EXIT = 1 + iota
+)
+
+type RedditPost struct {
+	Collection [] RedditResponse
+}
+
 type RedditResponse struct {
 	Kind string
 	Data DataType
@@ -24,19 +33,55 @@ type DataType struct {
 	Children []Child
 	After string
 	Before string
+	Subreddit_id string
+	Approved_at_utc string
+	Banned_by string
+	Removal_reason string
+	Link_id string
+	Likes int
+	Saved bool
+	Id string
+	Banned_at_utc int
+	Gilded int
+	Archived bool
+	Report_reasons string
+	Author string
+	Can_mod_post bool
+	Ups int
+	Parent_id string
+	Score int
+	Approved_by string
+	Downs int
+	Body string
+	Edited bool
+	Author_flair_css_class string
+	Collapsed bool
+	Is_Submitter bool
+	Collapsed_reason string
+	Body_html string
+	Stickied bool
+	Can_gild bool
+	Subreddit string
+	Score_hidden bool
+	Subreddit_type string
+	Name string
+	Created int
+	Author_flair_text string
+	Created_utc int
+	Subreddit_name_prefixed string
+	Controversiality int
+	Depth int
+	Num_reports int
+	Distinguished int
+	Url string
+	Permalink string
+	Title string
+	Replies DataType
 }
 
 type Child struct {
 	Kind string
-	Data ChildDataType
-}
-
-type ChildDataType struct {
-	Subreddit string
-	Title string
-	Author string
-	Permalink string
-	Url string
+	Data DataType
 }
 
 func main() {
@@ -106,14 +151,15 @@ func subreddit(subredditString string) int {
 		if (strings.ToLower(cmd[0]) == "exit") {
 			//Signify exit
 			isExit = 1
+			return 1
 		} else if (strings.ToLower(cmd[0]) == "back") {
-			isExit = 2
+			return 0
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
 		}
 	}
-	return isExit
+	return 0
 }
 /*
 func displayComments (subredditString string, postID string) {
