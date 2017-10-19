@@ -50,17 +50,17 @@ func originMenu() {
 	fmt.Println("exit				: exit the program")
 	fmt.Println("back				: go back to the previous level")
 	
-	isExit := false
+	isExit := 0
 
 	reader := bufio.NewReader(os.Stdin)
-	for isExit == false {
-		fmt.Printf("Command: ")
+	for isExit != 1 {
+		fmt.Printf("<Origin> Command: ")
 		usrIn, _ := reader.ReadString('\n')
 		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
 		if (strings.ToLower(cmd[0]) == "exit") {
 			//Signify exit
 			isExit = 1
-		} else if ((len(cmd) >= 2) & (cmd[0] == "goto")) {
+		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
 			
@@ -71,7 +71,7 @@ func originMenu() {
 	}
 }
 
-func subreddit(subredditString string) {
+func subreddit(subredditString string) int {
 	loadURL := redditURL + "r/" + subredditString + "/.json?limit=10"
 
 	client := &http.Client{
@@ -81,7 +81,6 @@ func subreddit(subredditString string) {
 	req, err := http.NewRequest("GET", loadURL, nil)
 
 	req.Header.Set("User-agent", "your bot 0.2")
-	fmt.Printf("%s \n", loadURL)
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -95,16 +94,28 @@ func subreddit(subredditString string) {
 
 	for i, v := range lst.Data.Children {
 		fmt.Printf("%d: %s \n", i+1, v.Data.Title)
+	}	
+
+	reader := bufio.NewReader(os.Stdin)
+
+	isExit := 0
+	for isExit == 0 {
+		fmt.Printf("<" + subredditString + "> Command: ")
+		usrIn, _ := reader.ReadString('\n')
+		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
+		if (strings.ToLower(cmd[0]) == "exit") {
+			//Signify exit
+			isExit = 1
+		} else if (strings.ToLower(cmd[0]) == "back") {
+			isExit = 2
+		} else {
+			//Erroneous input
+			fmt.Printf("Invalid input.\n")
+		}
 	}
-
-
-	
+	return isExit
 }
-
-displaySubreddit(subredditString string) {
-
-}
-
+/*
 func displayComments (subredditString string, postID string) {
 	loadURL := redditURL + "r/" + subredditString + "/comments/" + postID + ".json?"
 
@@ -128,7 +139,7 @@ func displayComments (subredditString string, postID string) {
 	json.Unmarshal([]byte(buf.String()), &lst)
 
 }
-
+*/
 var licenseCookie = &http.Cookie{Name: "oraclelicense",
 	Value:    "accept-securebackup-cookie",
 	Expires:  time.Now().Add(356 * 24 * time.Hour),
