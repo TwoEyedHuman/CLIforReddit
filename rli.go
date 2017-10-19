@@ -18,10 +18,6 @@ const (
 	EXIT = 1 + iota
 )
 
-type RedditPost struct {
-	Collection [] RedditResponse
-}
-
 type RedditResponse struct {
 	Kind string
 	Data DataType
@@ -52,7 +48,7 @@ type DataType struct {
 	Score int
 	Approved_by string
 	Downs int
-	Body string
+	Body string `json:"body"`
 	Edited bool
 	Author_flair_css_class string
 	Collapsed bool
@@ -76,7 +72,6 @@ type DataType struct {
 	Url string
 	Permalink string
 	Title string
-	Replies DataType
 }
 
 type Child struct {
@@ -108,7 +103,8 @@ func originMenu() {
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
-			
+		} else if (cmd[0] == "testing") {
+			testing()
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
@@ -154,6 +150,10 @@ func subreddit(subredditString string) int {
 			return 1
 		} else if (strings.ToLower(cmd[0]) == "back") {
 			return 0
+		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
+			//Go to subreddit
+			isExit = subreddit(cmd[1])
+			return isExit
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
@@ -161,9 +161,13 @@ func subreddit(subredditString string) int {
 	}
 	return 0
 }
-/*
-func displayComments (subredditString string, postID string) {
-	loadURL := redditURL + "r/" + subredditString + "/comments/" + postID + ".json?"
+
+func testing () {
+	comments("nfl","77b9kt") 
+}
+
+func comments (subredditString string, postID string) int {
+	loadURL := redditURL + "r/" + subredditString + "/comments/" + postID + "/.json?"
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -172,7 +176,6 @@ func displayComments (subredditString string, postID string) {
 	req, err := http.NewRequest("GET", loadURL, nil)
 
 	req.Header.Set("User-agent", "your bot 0.2")
-	fmt.Printf("%s \n", loadURL)
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -181,11 +184,15 @@ func displayComments (subredditString string, postID string) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-	var lst RedditResponse
-	json.Unmarshal([]byte(buf.String()), &lst)
+	result := make([]RedditResponse,0)
+	json.Unmarshal([]byte(buf.String()), &result)
 
+	for i, v := range result[1].Data.Children {
+		fmt.Printf("%d: %s\n",i+1, v.Data.Body)
+	}
+	return 0
 }
-*/
+
 var licenseCookie = &http.Cookie{Name: "oraclelicense",
 	Value:    "accept-securebackup-cookie",
 	Expires:  time.Now().Add(356 * 24 * time.Hour),
