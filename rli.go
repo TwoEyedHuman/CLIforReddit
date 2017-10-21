@@ -14,7 +14,7 @@ import (
 )
 
 const redditURL string = "https://www.reddit.com/"
-const resultLimit int = 10
+const resultLimit int = 8
 const charLimit int = 64
 
 type RedditResponse struct {
@@ -23,53 +23,53 @@ type RedditResponse struct {
 }
 
 type DataType struct {
-	Modhash string
-	Whitelist_status string
+//	Modhash string
+//	Whitelist_status string
 	Children []RedditResponse
-	After string
-	Before string
-	Subreddit_id string
-	Approved_at_utc string
-	Banned_by string
-	Removal_reason string
-	Link_id string
+//	After string
+//	Before string
+//	Subreddit_id string
+//	Approved_at_utc string
+//	Banned_by string
+//	Removal_reason string
+//	Link_id string
 //	Likes int
 //	Saved bool
 	Id string
 //	Banned_at_utc int
 //	Gilded int
 //	Archived bool
-	Report_reasons string
-	Author string
-	Can_mod_post bool
+//	Report_reasons string
+//	Author string
+//	Can_mod_post bool
 //	Ups int
-	Parent_id string
+//	Parent_id string
 //	Score int
-	Approved_by string
+//	Approved_by string
 //	Downs int
 	Body string `json:"body"`
 //	Edited bool
-	Author_flair_css_class string
+//	Author_flair_css_class string
 //	Collapsed bool
 //	Is_Submitter bool
-	Collapsed_reason string
-	Body_html string
+//	Collapsed_reason string
+//	Body_html string
 //	Stickied bool
 //	Can_gild bool
-	Subreddit string
+//	Subreddit string
 //	Score_hidden bool
-	Subreddit_type string
-	Name string
+//	Subreddit_type string
+//	Name string
 //	Created int
-	Author_flair_text string
+//	Author_flair_text string
 //	Created_utc int
-	Subreddit_name_prefixed string
+//	Subreddit_name_prefixed string
 //	Controversiality int
 //	Depth int
 //	Num_reports int
 //	Distinguished int
-	Url string
-	Permalink string
+//	Url string
+//	Permalink string
 	Title string
 }
 
@@ -139,7 +139,7 @@ func subreddit(subredditString string) int {
 	f.Sync()
 
 	for i, v := range lst.Data.Children {
-		fmt.Printf("%d: %s \n", i+1, v.Data.Title[0:min(charLimit,len(v.Data.Title)-1)])
+		fmt.Printf("%d: %s \n", i+1, v.Data.Title[0:min(charLimit,len(v.Data.Title))])
 	}	
 
 	reader := bufio.NewReader(os.Stdin)
@@ -195,10 +195,19 @@ func comments (subredditString string, postID string) int {
 	buf.ReadFrom(resp.Body)
 	result := make([]RedditResponse,0)
 	json.Unmarshal([]byte(buf.String()), &result)
-	fmt.Printf("Size: %d\n", len(result[1].Data.Children))
+	fmt.Printf("Comment Count: %d\n", len(result[1].Data.Children))
+
+	f, err := os.Create("lastJson.txt")
+
+	defer f.Close()
+
+	f.WriteString(buf.String())
+
+	f.Sync()
+
 	for i, v := range result[1].Data.Children {
 		if (len(v.Data.Body) > 0) {
-			fmt.Printf("%d: %s\n",i+1, v.Data.Body[0:min(charLimit, len(v.Data.Body)-1)])
+			fmt.Printf("%d: %s\n",i+1, v.Data.Body[0:min(charLimit, len(v.Data.Body))])
 		}
 	}
 	return 0
