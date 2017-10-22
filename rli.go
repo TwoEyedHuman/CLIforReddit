@@ -161,7 +161,7 @@ func subreddit(subredditString string) int {
 			return isExit
 		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
-			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id)
+			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
 			return isExit
 		} else {
 			//Erroneous input
@@ -172,10 +172,10 @@ func subreddit(subredditString string) int {
 }
 
 func testing () {
-	comments("nfl","77b9kt") 
+	comments("nfl","77b9kt","testing") 
 }
 
-func comments (subredditString string, postID string) int {
+func comments (subredditString string, postID string, postTitle string) int {
 	loadURL := fmt.Sprintf("%s%s%s%s%s%s%d", redditURL, "r/", subredditString, "/comments/", postID, "/.json?")
 
 	client := &http.Client{
@@ -207,6 +207,29 @@ func comments (subredditString string, postID string) int {
 	for i, v := range result[1].Data.Children {
 		if ((len(v.Data.Body) > 0) && (i <= resultLimit + 1)){
 			fmt.Printf("%d: %s\n",i+1, v.Data.Body[0:min(charLimit, len(v.Data.Body))])
+		}
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	isExit := 0
+	for isExit == 0 {
+		fmt.Printf("<" + postTitle[0:min(5, len(postTitle))] + "> Command: ")
+		usrIn, _ := reader.ReadString('\n')
+		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
+		if (strings.ToLower(cmd[0]) == "exit") {
+			//Signify exit
+			isExit = 1
+			return 1
+		} else if (strings.ToLower(cmd[0]) == "back") {
+			return 0
+		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
+			//Go to subreddit
+			isExit = subreddit(cmd[1])
+			return isExit
+		} else {
+			//Erroneous input
+			fmt.Printf("Invalid input.\n")
 		}
 	}
 	return 0
