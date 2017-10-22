@@ -176,7 +176,7 @@ func testing () {
 }
 
 func comments (subredditString string, postID string) int {
-	loadURL := fmt.Sprintf("%s%s%s%s%s%s%d", redditURL, "r/", subredditString, "/comments/", postID, "/.json?limit=", resultLimit)
+	loadURL := fmt.Sprintf("%s%s%s%s%s%s%d", redditURL, "r/", subredditString, "/comments/", postID, "/.json?")
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -195,7 +195,6 @@ func comments (subredditString string, postID string) int {
 	buf.ReadFrom(resp.Body)
 	result := make([]RedditResponse,0)
 	json.Unmarshal([]byte(buf.String()), &result)
-	fmt.Printf("Comment Count: %d\n", len(result[1].Data.Children))
 
 	f, err := os.Create("lastJson.txt")
 
@@ -206,7 +205,7 @@ func comments (subredditString string, postID string) int {
 	f.Sync()
 
 	for i, v := range result[1].Data.Children {
-		if (len(v.Data.Body) > 0) {
+		if ((len(v.Data.Body) > 0) && (i <= resultLimit + 1)){
 			fmt.Printf("%d: %s\n",i+1, v.Data.Body[0:min(charLimit, len(v.Data.Body))])
 		}
 	}
