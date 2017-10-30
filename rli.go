@@ -11,6 +11,7 @@ import (
 	"bufio"
 	"strconv"
 //	"io/ioutil"
+	"os/exec"
 )
 
 const redditURL string = "https://www.reddit.com/"
@@ -68,7 +69,7 @@ type DataType struct {
 //	Depth int
 //	Num_reports int
 //	Distinguished int
-//	Url string
+	Url string
 //	Permalink string
 	Title string
 }
@@ -158,17 +159,19 @@ func subreddit(subredditString string) int {
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
-			return isExit
 		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
-			return isExit
+		} else if ((len(cmd) >= 2) && (cmd[0] == "open")) {
+			postIndex, _ := strconv.Atoi(cmd[1])
+			cmd := exec.Command("open", lst.Data.Children[postIndex - 1].Data.Url)
+			cmd.Output()
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
 		}
 	}
-	return 0
+	return isExit
 }
 
 func testing () {
@@ -227,6 +230,9 @@ func comments (subredditString string, postID string, postTitle string) int {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
 			return isExit
+		} else if ((len(cmd) >=2) && (cmd[0] == "more")) {
+			grabComment, _ := strconv.Atoi(cmd[1])
+			fmt.Printf("Expanded: %s\n",  result[1].Data.Children[grabComment-1].Data.Body)
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
