@@ -162,6 +162,9 @@ func subreddit(subredditString string) int {
 		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
+		} else if ((len(cmd) >=2) && (cmd[0] == "full")) {
+			postIndex, _ := strconv.Atoi(cmd[1])
+			fmt.Printf("%d: %s \n", postIndex, lst.Data.Children[postIndex-1].Data.Title)
 		} else if ((len(cmd) >= 2) && (cmd[0] == "open")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			cmd := exec.Command("open", lst.Data.Children[postIndex - 1].Data.Url)
@@ -230,9 +233,12 @@ func comments (subredditString string, postID string, postTitle string) int {
 			//Go to subreddit
 			isExit = subreddit(cmd[1])
 			return isExit
+		} else if ((len(cmd) >=2) && (cmd[0] == "full")) {
+			commIndex, _ := strconv.Atoi(cmd[1])
+			fmt.Printf("%d: %s \n", commIndex-1, result[1].Data.Children[commIndex].Data.Body)
 		} else if ((len(cmd) >=2) && (cmd[0] == "more")) {
 			grabComment, _ := strconv.Atoi(cmd[1])
-			fmt.Printf("Expanded: %s\n",  result[1].Data.Children[grabComment-1].Data.Body)
+			fmt.Printf("Expanded: %s\n",  result[1].Data.Children[grabComment].Data.Body)
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
