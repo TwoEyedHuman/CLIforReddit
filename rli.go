@@ -15,7 +15,7 @@ import (
 )
 
 const redditURL string = "https://www.reddit.com/"
-const resultLimit int = 8
+const resultLimit int = 10
 const charLimit int = 64
 
 type RedditResponse struct {
@@ -27,8 +27,8 @@ type DataType struct {
 //	Modhash string
 //	Whitelist_status string
 	Children []RedditResponse
-//	After string
-//	Before string
+	After string
+	Before string
 //	Subreddit_id string
 //	Approved_at_utc string
 //	Banned_by string
@@ -91,7 +91,7 @@ func originMenu() {
 		if (strings.ToLower(cmd[0]) == "exit") { //signify exit
 			isExit = 1
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) { //go to subreddit
-			isExit = subreddit(cmd[1])
+			isExit = subreddit(cmd[1], "")
 		} else if (cmd[0] == "testing") { //go to testing module
 			testing()
 		} else if (cmd[0] == "help") { //display commands
@@ -110,9 +110,13 @@ func welcome() {
 	fmt.Println("back				: go back to the previous level")
 }
 
-func subreddit(subredditString string) int {
-	loadURL := fmt.Sprintf("%s%s%s%s%d", redditURL, "r/", subredditString, "/.json?limit=", resultLimit)
-
+func subreddit(subredditString string, after string) int {
+	var loadURL string
+	if after == "" {
+		loadURL = fmt.Sprintf("%s%s%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit)
+	} else {
+			loadURL = fmt.Sprintf("%s%s%s%s%s%d%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit, "&after=", after, "&count=", resultLimit)
+	}
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
 	}
@@ -158,7 +162,7 @@ func subreddit(subredditString string) int {
 			return 0
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			//Go to subreddit
-			isExit = subreddit(cmd[1])
+			isExit = subreddit(cmd[1], "")
 		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
@@ -169,6 +173,9 @@ func subreddit(subredditString string) int {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			cmd := exec.Command("open", lst.Data.Children[postIndex - 1].Data.Url)
 			cmd.Output()
+		} else if (strings.ToLower(cmd[0]) == "next") {
+			//Goto next page of subreddit
+			isExit = subreddit(subredditString, lst.Data.After)
 		} else {
 			//Erroneous input
 			fmt.Printf("Invalid input.\n")
@@ -231,11 +238,11 @@ func comments (subredditString string, postID string, postTitle string) int {
 			return 0
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			//Go to subreddit
-			isExit = subreddit(cmd[1])
+			isExit = subreddit(cmd[1], "")
 			return isExit
 		} else if ((len(cmd) >=2) && (cmd[0] == "full")) {
 			commIndex, _ := strconv.Atoi(cmd[1])
-			fmt.Printf("%d: %s \n", commIndex-1, result[1].Data.Children[commIndex].Data.Body)
+			fmt.Printf("%d: %s \n", commIndex, result[1].Data.Children[commIndex-1].Data.Body)
 		} else if ((len(cmd) >=2) && (cmd[0] == "more")) {
 			grabComment, _ := strconv.Atoi(cmd[1])
 			fmt.Printf("Expanded: %s\n",  result[1].Data.Children[grabComment].Data.Body)
