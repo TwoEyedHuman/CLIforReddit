@@ -108,6 +108,7 @@ func welcome() {
 	fmt.Println("goTo [subReddit]		: load the posts in subReddit")
 	fmt.Println("exit				: exit the program")
 	fmt.Println("back				: go back to the previous level")
+	fmt.Println("full [int]			: display the full comment or title")
 }
 
 func subreddit(subredditString string, after string) int {
