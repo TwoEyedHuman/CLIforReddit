@@ -103,6 +103,7 @@ func originMenu() {
 }
 
 func welcome() {
+	//Display the input options of the program
 	fmt.Println("Welcome to CLI for Reddit!")
 	fmt.Println("----------Commands----------")
 	fmt.Println("goTo [subReddit]		: load the posts in subReddit")
@@ -111,12 +112,30 @@ func welcome() {
 	fmt.Println("full [int]			: display the full comment or title")
 }
 
+func defaultSwitcher(cmd []string) {
+		if (strings.ToLower(cmd[0]) == "exit") {
+			isExit = 1 //signify exit
+			return 1
+		} else if (strings.ToLower(cmd[0]) == "back") {
+			return 0
+		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
+			isExit = subreddit(cmd[1], "") //goto subreddit
+		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
+			postIndex, _ := strconv.Atoi(cmd[1])
+			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
+		} else {
+			//Erroneous input
+			fmt.Printf("Invalid input.\n")
+		}
+}
+
 func subreddit(subredditString string, after string) int {
+	//Build the url and load the json
 	var loadURL string
 	if after == "" {
 		loadURL = fmt.Sprintf("%s%s%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit)
 	} else {
-			loadURL = fmt.Sprintf("%s%s%s%s%s%d%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit, "&after=", after, "&count=", resultLimit)
+		loadURL = fmt.Sprintf("%s%s%s%s%s%d%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit, "&after=", after, "&count=", resultLimit)
 	}
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
@@ -128,20 +147,18 @@ func subreddit(subredditString string, after string) int {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		panic(err)
+		fmt.Println("There was an issue loading the URL. Please try again later.")
+		return 0 //go back one level
 	}
 
+	//transform the response data into a data structure
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	var lst RedditResponse
 	json.Unmarshal([]byte(buf.String()), &lst)
-
 	f, err := os.Create("lastJson.txt")
-
 	defer f.Close()
-
 	f.WriteString(buf.String())
-
 	f.Sync()
 
 	for i, v := range lst.Data.Children {
