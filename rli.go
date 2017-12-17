@@ -88,16 +88,13 @@ func originMenu() {
 		fmt.Printf("<Origin> Command: ")
 		usrIn, _ := reader.ReadString('\n')
 		cmd := strings.Fields(strings.TrimRight(usrIn, "\n")) //trims and tokenizes user input
-		if (strings.ToLower(cmd[0]) == "exit") { //signify exit
-			isExit = 1
-		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) { //go to subreddit
-			isExit = subreddit(cmd[1], "")
-		} else if (cmd[0] == "testing") { //go to testing module
+		if (cmd[0] == "testing") { //go to testing module
 			testing()
 		} else if (cmd[0] == "help") { //display commands
 			welcome()
-		} else {  //erroneous or unexpected input
-			fmt.Printf("Invalid input.\n")
+		} else {
+			//use one of the default switches
+			isExit = defaultSwitcher(cmd)
 		}
 	}
 }
@@ -112,40 +109,37 @@ func welcome() {
 	fmt.Println("full [int]			: display the full comment or title")
 }
 
-func defaultSwitcher(cmd []string) {
+func defaultSwitcher(cmd []string) int {
+		var isExit int
 		if (strings.ToLower(cmd[0]) == "exit") {
 			isExit = 1 //signify exit
-			return 1
 		} else if (strings.ToLower(cmd[0]) == "back") {
-			return 0
+			isExit = 0 //signify back
 		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
 			isExit = subreddit(cmd[1], "") //goto subreddit
-		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
-			postIndex, _ := strconv.Atoi(cmd[1])
-			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
 		} else {
-			//Erroneous input
-			fmt.Printf("Invalid input.\n")
+			fmt.Printf("Invalid input.\n") //erroneous input
 		}
+		return isExit
 }
 
 func subreddit(subredditString string, after string) int {
-	//Build the url and load the json
+	isExit := 0
+	//Build the url to load the json
 	var loadURL string
-	if after == "" {
+	if after == "" { //load the first page of the subreddit
 		loadURL = fmt.Sprintf("%s%s%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit)
-	} else {
+	} else { //load one of the following pages of the subreddit
 		loadURL = fmt.Sprintf("%s%s%s%s%s%d%s%s%s%d", redditURL, "r/", subredditString, "/.json?", "limit=", resultLimit, "&after=", after, "&count=", resultLimit)
 	}
+
+	//mechanism to pull the json data
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
 	}
-
 	req, err := http.NewRequest("GET", loadURL, nil)
-
 	req.Header.Set("User-agent", "your bot 0.2")
 	resp, err := client.Do(req)
-
 	if err != nil {
 		fmt.Println("There was an issue loading the URL. Please try again later.")
 		return 0 //go back one level
@@ -167,21 +161,11 @@ func subreddit(subredditString string, after string) int {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	isExit := 0
 	for isExit == 0 {
 		fmt.Printf("<" + subredditString + "> Command: ")
 		usrIn, _ := reader.ReadString('\n')
 		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
-		if (strings.ToLower(cmd[0]) == "exit") {
-			//Signify exit
-			isExit = 1
-			return 1
-		} else if (strings.ToLower(cmd[0]) == "back") {
-			return 0
-		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
-			//Go to subreddit
-			isExit = subreddit(cmd[1], "")
-		} else if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
+		if ((len(cmd) >= 2) && (cmd[0] == "comm")) {
 			postIndex, _ := strconv.Atoi(cmd[1])
 			isExit = comments(subredditString, lst.Data.Children[postIndex - 1].Data.Id, lst.Data.Children[postIndex-1].Data.Title)
 		} else if ((len(cmd) >=2) && (cmd[0] == "full")) {
@@ -195,8 +179,8 @@ func subreddit(subredditString string, after string) int {
 			//Goto next page of subreddit
 			isExit = subreddit(subredditString, lst.Data.After)
 		} else {
-			//Erroneous input
-			fmt.Printf("Invalid input.\n")
+			//one of the default switches
+			isExit = defaultSwitcher(cmd)
 		}
 	}
 	return isExit
@@ -207,19 +191,18 @@ func testing () {
 }
 
 func comments (subredditString string, postID string, postTitle string) int {
+	isExit := 0
 	loadURL := fmt.Sprintf("%s%s%s%s%s%s%d", redditURL, "r/", subredditString, "/comments/", postID, "/.json?")
 
 	client := &http.Client{
 		CheckRedirect: redirectPolicyFunc,
 	}
-
 	req, err := http.NewRequest("GET", loadURL, nil)
-
 	req.Header.Set("User-agent", "your bot 0.2")
 	resp, err := client.Do(req)
-
 	if err != nil {
-		panic(err)
+		fmt.Println("There was an issue loading the URL. Please try again later.")
+		return 0 //go back one level
 	}
 
 	buf := new(bytes.Buffer)
@@ -243,33 +226,22 @@ func comments (subredditString string, postID string, postTitle string) int {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	isExit := 0
 	for isExit == 0 {
 		fmt.Printf("<" + postTitle[0:min(5, len(postTitle))] + "> Command: ")
 		usrIn, _ := reader.ReadString('\n')
 		cmd := strings.Fields(strings.TrimRight(usrIn, "\n"))
-		if (strings.ToLower(cmd[0]) == "exit") {
-			//Signify exit
-			isExit = 1
-			return 1
-		} else if (strings.ToLower(cmd[0]) == "back") {
-			return 0
-		} else if ((len(cmd) >= 2) && (cmd[0] == "goto")) {
-			//Go to subreddit
-			isExit = subreddit(cmd[1], "")
-			return isExit
-		} else if ((len(cmd) >=2) && (cmd[0] == "full")) {
+		if ((len(cmd) >=2) && (cmd[0] == "full")) {
 			commIndex, _ := strconv.Atoi(cmd[1])
 			fmt.Printf("%d: %s \n", commIndex, result[1].Data.Children[commIndex-1].Data.Body)
 		} else if ((len(cmd) >=2) && (cmd[0] == "more")) {
 			grabComment, _ := strconv.Atoi(cmd[1])
 			fmt.Printf("Expanded: %s\n",  result[1].Data.Children[grabComment].Data.Body)
 		} else {
-			//Erroneous input
-			fmt.Printf("Invalid input.\n")
+			//one of the default switches
+			isExit = defaultSwitcher(cmd)
 		}
 	}
-	return 0
+	return isExit
 }
 
 func min(a int, b int) int {
