@@ -1,2 +1,2 @@
 # CLIforReddit
-Used to view Reddot from CLI.
+Used to view Reddit from command line.
